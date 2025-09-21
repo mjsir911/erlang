@@ -183,11 +183,6 @@ fn raw_send(a: Pid, b: message) -> DoNotLeak
 /// This function does not wait for the `Subject` owner process to call the
 /// `receive` function, instead it returns once the message has been placed in
 /// the process' mailbox.
-/// 
-/// # Named Subjects
-/// 
-/// If this function is called on a named subject for which a process has not been 
-/// registered, it will simply drop the message as there's no mailbox to send it to.
 ///
 /// # Panics
 ///
