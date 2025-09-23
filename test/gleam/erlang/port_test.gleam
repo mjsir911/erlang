@@ -102,3 +102,19 @@ pub fn port_switchover_test() {
 
   port.close(port)
 }
+
+
+pub fn port_subject_send_test() {
+  let assert Ok(port) = port.open(
+    port.spawn_executable("/bin/bash"),
+    [port.Args(["-c", "cat"]), port.UseStdio, port.ExitStatus, port.Binary]
+  )
+
+  let subject = port_subject(port)
+
+
+  assert assert_panic(fn() { process.send(subject, Data(<<"hello">>)) })
+    == "Cannot send on PortSubject"
+
+  port.close(port)
+}
