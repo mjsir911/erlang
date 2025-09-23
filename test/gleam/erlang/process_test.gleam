@@ -686,3 +686,56 @@ pub fn name_other_test() {
     == "Cannot receive with a subject owned by another process"
   process.unregister(name)
 }
+
+
+// tests that sending/receiving on names fail if the name gets unregistered
+pub fn unregister_receive_test() {
+  let name = process.new_name("name")
+  let assert Ok(_) = process.register(process.self(), name)
+  let subject = process.named_subject(name)
+
+  process.send(subject, "Hello")
+  let assert Ok("Hello") = process.receive(subject, 0)
+
+  let assert Ok(_) = process.unregister(name)
+
+  assert assert_panic(fn() { process.send(subject, "Hello") })
+    == "Sending to unregistered name"
+  assert assert_panic(fn() { process.receive(subject, 0) })
+    == "Cannot receive with a subject owned by another process" // this error message could be better
+}
+
+// tests that receiving on names fail if the registration gets moved during execution
+pub fn name_other_switchover_test() {
+  let name = process.new_name("name")
+  let self = process.self()
+  let assert Ok(_) = process.register(self, name)
+  let subject = process.named_subject(name)
+
+  assert Ok(self) == process.subject_owner(subject)
+
+  process.send(subject, "Hello")
+  let assert Ok("Hello") = process.receive(subject, 0)
+
+  let pid = process.spawn(fn() {
+    process.sleep(10)
+    let assert Ok(_) = process.unregister(name) // "undesirable behaviour"
+    let assert Ok(_) = process.register(process.self(), name)
+
+    process.sleep(20)
+    let assert Ok("Peace") = process.receive(subject, 0)
+  })
+
+  assert Ok(self) == process.subject_owner(subject)
+
+  process.send(subject, "World")
+  let assert Ok("World") = process.receive(subject, 0)
+
+  assert Ok(self) == process.subject_owner(subject)
+  process.sleep(12)
+  assert Ok(pid) == process.subject_owner(subject)
+
+  process.send(subject, "Peace")
+  assert assert_panic(fn() { process.receive(subject, 0) })
+    == "Cannot receive with a subject owned by another process"
+}
