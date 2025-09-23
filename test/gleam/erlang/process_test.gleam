@@ -112,6 +112,15 @@ pub fn receive_forever_test() {
   let assert 2 = process.receive_forever(subject)
 }
 
+pub fn receive_forever_other_test() {
+  let subject = process.new_subject()
+  process.spawn(fn() { process.send(subject, process.new_subject()) })
+  let subject = process.receive_forever(subject)
+
+  assert assert_panic(fn() { process.receive_forever(subject) })
+    == "Cannot receive with a subject owned by another process"
+}
+
 pub fn is_alive_test() {
   let pid = process.spawn_unlinked(fn() { Nil })
   process.sleep(5)
@@ -664,5 +673,16 @@ pub fn name_test() {
   let subject = process.named_subject(name)
   process.send(subject, "Hello")
   let assert Ok("Hello") = process.receive(subject, 0)
+  process.unregister(name)
+}
+
+pub fn name_other_test() {
+  let name = process.new_name("name")
+  let pid = process.spawn_unlinked(fn() { process.sleep(10) })
+  let assert Ok(_) = process.register(pid, name)
+  let subject = process.named_subject(name)
+  process.send(subject, "Hello")
+  assert assert_panic(fn() { process.receive(subject, 5) })
+    == "Cannot receive with a subject owned by another process"
   process.unregister(name)
 }
