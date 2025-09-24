@@ -1,4 +1,5 @@
 import gleam/dynamic
+import gleam/erlang/charlist.{type Charlist}
 
 /// Ports are how code running on the Erlang virtual machine interacts with
 /// the outside world. Bytes of data can be sent to and read from ports,
@@ -33,7 +34,7 @@ pub fn spawn_executable(command: String) -> PortCommand {
 pub type PortOptions {
   Arg0(String)
   Args(List(String))
-  Env(List(#(String, String)))
+  Env(List(#(Charlist, Charlist)))
   Cd(String)
   Binary
 

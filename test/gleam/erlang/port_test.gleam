@@ -1,6 +1,7 @@
 import gleam/erlang/port
 import gleam/erlang/port/receive.{Data, ExitStatus}
 import gleam/erlang/process.{receive, port_open, port_connect, port_subject}
+import gleam/erlang/charlist
 
 @external(erlang, "gleam_erlang_test_ffi", "assert_gleam_panic")
 fn assert_panic(f: fn() -> t) -> String
@@ -16,6 +17,21 @@ pub fn port_open_test() {
   assert Ok(Data(<<"3\n">>)) == receive(subject, 100)
   assert Ok(ExitStatus(0)) == receive(subject, 100)
   assert Error(Nil) == receive(subject, 100)
+}
+
+pub fn port_env_open_test() {
+  let assert Ok(port) = port.open(
+    port.spawn_executable("/bin/bash"),
+    [
+      port.Args(["-c", "echo $VAR"]),
+      port.Env([#(charlist.from_string("VAR"), charlist.from_string("test123"))]),
+      port.UseStdio, port.ExitStatus, port.Binary
+    ]
+  )
+
+  let subject = port_subject(port)
+
+  assert Ok(Data(<<"test123\n">>)) == receive(subject, 100)
 }
 
 pub fn fail_port_open_test() {
