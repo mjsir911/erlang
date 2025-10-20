@@ -239,6 +239,13 @@ pub fn send(subject: Subject(message), message: message) -> Nil {
 /// This function will panic if a process tries to receive with a non-named
 /// subject that it does not own.
 ///
+/// of note, this function will error even if there are queued up messages
+/// within the process' mailbox directed at a named subject that was
+/// *previously* registered to this process, and then got re-registered
+/// to another.
+/// To recieve messages on subjects not directed at the current pid,
+/// use `Select`
+///
 pub fn receive(
   from subject: Subject(message),
   within timeout: Int,
